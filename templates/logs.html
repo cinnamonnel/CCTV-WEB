@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head><title>Logs – Group 10 NetAd</title></head>
+<body>
+    <h1>Activity Logs</h1>
+    <form method="GET">
+        <label>Filter by username:</label>
+        <input type="text" name="user" value="{{ filter_user }}">
+        <button type="submit">Filter</button>
+        <a href="/logs">Clear</a>
+    </form>
+    <br>
+    {% if logs %}
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Action</th>
+                <th>IP Address</th>
+                <th>Status</th>
+                <th>Reason</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.username }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.ip_address or '' }}</td>
+                <td>{{ log.status }}</td>
+                <td>{{ log.reason or '' }}</td>
+                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No logs found.</p>
+    {% endif %}
+    <br>
+    <a href="/dashboard">Back to Dashboard</a> |
+    <a href="/logout">Logout</a>
+</body>
+</html>

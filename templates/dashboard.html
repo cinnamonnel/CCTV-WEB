@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Dashboard – Group 10 NetAd</title></head>
+<body>
+    <h1>CCTV Dashboard</h1>
+    <p>Welcome, <strong>{{ session['username'] }}</strong>!</p>
+
+    {% if camera_ready %}
+        <h2>Live Camera Feed</h2>
+        <img src="{{ url_for('camera.video_feed') }}" width="640" height="480">
+    {% else %}
+        <p style="color:orange;">
+            ⚠️ Camera not connected yet.
+            <a href="{{ url_for('camera.configure_camera') }}">Configure camera stream URL</a>
+        </p>
+    {% endif %}
+
+    <br><br>
+    <a href="/logs">View Logs</a> |
+    <a href="/configure_camera">Configure Camera</a> |
+    <a href="/logout">Logout</a>
+</body>
+</html>
