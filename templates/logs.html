@@ -1,43 +1,258 @@
 <!DOCTYPE html>
-<html>
-<head><title>Logs – Group 10 NetAd</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs – Group 10 NetAd</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .logs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .filter-section {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .filter-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .filter-section input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-section input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        }
+
+        .filter-actions {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .filter-actions button,
+        .filter-actions a {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .filter-actions button:hover,
+        .filter-actions a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-actions button:active,
+        .filter-actions a:active {
+            transform: translateY(0);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9ff;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-logs {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .nav-links a:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .logs-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            .filter-section {
+                padding: 20px;
+            }
+
+            th, td {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+
+            .nav-links a {
+                margin: 0 10px 10px 10px;
+                display: block;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
 <body>
-    <h1>Activity Logs</h1>
-    <form method="GET">
-        <label>Filter by username:</label>
-        <input type="text" name="user" value="{{ filter_user }}">
-        <button type="submit">Filter</button>
-        <a href="/logs">Clear</a>
-    </form>
-    <br>
-    {% if logs %}
-        <table border="1" cellpadding="8">
-            <tr>
-                <th>#</th>
-                <th>Username</th>
-                <th>Action</th>
-                <th>IP Address</th>
-                <th>Status</th>
-                <th>Reason</th>
-                <th>Timestamp</th>
-            </tr>
-            {% for log in logs %}
-            <tr>
-                <td>{{ log.id }}</td>
-                <td>{{ log.username }}</td>
-                <td>{{ log.action }}</td>
-                <td>{{ log.ip_address or '' }}</td>
-                <td>{{ log.status }}</td>
-                <td>{{ log.reason or '' }}</td>
-                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>No logs found.</p>
-    {% endif %}
-    <br>
-    <a href="/dashboard">Back to Dashboard</a> |
-    <a href="/logout">Logout</a>
+    <div class="logs-container">
+        <h1>Activity Logs</h1>
+
+        <div class="filter-section">
+            <form method="GET">
+                <label for="user">Filter by username:</label>
+                <input type="text" id="user" name="user" value="{{ filter_user }}">
+                <div class="filter-actions">
+                    <button type="submit">Filter</button>
+                    <a href="/logs">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        {% if logs %}
+            <table>
+                <tr>
+                    <th>#</th>
+                    <th>Username</th>
+                    <th>Action</th>
+                    <th>IP Address</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Timestamp</th>
+                </tr>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.id }}</td>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.ip_address or '' }}</td>
+                    <td>
+                        <span class="status-badge {% if log.status == 'Success' %}status-success{% else %}status-failed{% endif %}">
+                            {{ log.status }}
+                        </span>
+                    </td>
+                    <td>{{ log.reason or '' }}</td>
+                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <div class="no-logs">
+                No logs found.
+            </div>
+        {% endif %}
+
+        <div class="nav-links">
+            <a href="{{ url_for('camera.dashboard') }}">Back to Dashboard</a> |
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+    </div>
 </body>
 </html>

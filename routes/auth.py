@@ -2,7 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from extensions import db, limiter
 from models.user import User
 from models.log import Log
+from models.login_attempt import LoginAttempt
 import bcrypt
+from datetime import datetime, timedelta
 
 auth = Blueprint('auth', __name__)
 
@@ -78,24 +80,41 @@ def register():
 
 
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per 15 minutes")
 def login():
     if request.method == 'POST':
         username = request.form['username'].strip()
         password = request.form['password']
+        ip_address = request.remote_addr
+
+        # Get or create login attempt record for this IP
+        login_attempt = LoginAttempt.query.filter_by(ip_address=ip_address).first()
+        if not login_attempt:
+            login_attempt = LoginAttempt(ip_address=ip_address, failed_attempts=0)
+            db.session.add(login_attempt)
+
+        # Check if IP is locked
+        is_locked = login_attempt.locked_until and login_attempt.locked_until > datetime.utcnow()
 
         user = User.query.filter_by(username=username).first()
 
-        if user and bcrypt.checkpw(
+        # Determine login success
+        login_success = user and bcrypt.checkpw(
             password.encode('utf-8'),
             user.password.encode('utf-8')
-        ):
+        )
+
+        if login_success:
+            # Successful login - reset failed attempts and lock time
+            login_attempt.failed_attempts = 0
+            login_attempt.locked_until = None
+            db.session.commit()
+
             session['username'] = username
 
             log = Log(
                 username=username,
                 action='Logged in',
-                ip_address=request.remote_addr,
+                ip_address=ip_address,
                 status='Success'
             )
             db.session.add(log)
@@ -103,23 +122,30 @@ def login():
 
             return redirect(url_for('camera.dashboard'))
         else:
-            # Determine reason for failure
-            if not user:
-                reason = 'User not found'
-            else:
-                reason = 'Wrong password'
+            # Failed login - increment failed attempts
+            login_attempt.failed_attempts += 1
 
+            # Log the failed attempt
             log = Log(
                 username=username or 'unknown',
                 action='Login attempt',
-                ip_address=request.remote_addr,
+                ip_address=ip_address,
                 status='Failed',
-                reason=reason
+                reason='Account locked due to too many failed attempts' if is_locked else ('User not found' if not user else 'Wrong password')
             )
             db.session.add(log)
-            db.session.commit()
 
-            flash('login failed')
+            # Lock account if 5 or more failed attempts (and not already locked)
+            if login_attempt.failed_attempts >= 5 and not is_locked:
+                login_attempt.locked_until = datetime.utcnow() + timedelta(minutes=15)
+                flash_message = 'Account locked due to too many failed attempts. Please try again later.'
+            elif is_locked:
+                flash_message = 'Account locked due to too many failed attempts. Please try again later.'
+            else:
+                flash_message = 'Login failed'
+
+            db.session.commit()
+            flash(flash_message)
             return redirect(url_for('auth.login'))
 
     return render_template('login.html')

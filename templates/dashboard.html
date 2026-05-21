@@ -1,23 +1,173 @@
 <!DOCTYPE html>
-<html>
-<head><title>Dashboard – Group 10 NetAd</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – Group 10 NetAd</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .welcome-message strong {
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .camera-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .camera-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .camera-feed {
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            max-width: 100%;
+            height: auto;
+            transition: border-color 0.3s ease;
+        }
+
+        .camera-feed:hover {
+            border-color: #667eea;
+        }
+
+        .camera-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .camera-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .camera-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .nav-links a:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            .nav-links a {
+                margin: 0 10px 10px 10px;
+                display: block;
+            }
+        }
+    </style>
+</head>
 <body>
-    <h1>CCTV Dashboard</h1>
-    <p>Welcome, <strong>{{ session['username'] }}</strong>!</p>
+    <div class="dashboard-container">
+        <h1>CCTV Dashboard</h1>
 
-    {% if camera_ready %}
-        <h2>Live Camera Feed</h2>
-        <img src="{{ url_for('camera.video_feed') }}" width="640" height="480">
-    {% else %}
-        <p style="color:orange;">
-            ⚠️ Camera not connected yet.
-            <a href="{{ url_for('camera.configure_camera') }}">Configure camera stream URL</a>
-        </p>
-    {% endif %}
+        <div class="welcome-message">
+            Welcome, <strong>{{ session['username'] }}</strong>!
+        </div>
 
-    <br><br>
-    <a href="/logs">View Logs</a> |
-    <a href="/configure_camera">Configure Camera</a> |
-    <a href="/logout">Logout</a>
+        {% if camera_ready %}
+            <div class="camera-section">
+                <h2>Live Camera Feed</h2>
+                <img src="{{ url_for('camera.video_feed') }}" alt="Live Camera Feed" class="camera-feed">
+            </div>
+            <div class="camera-status connected">
+                ✅ Camera Connected and Streaming
+            </div>
+        {% else %}
+            <div class="camera-section">
+                <h2>Camera Configuration Needed</h2>
+            </div>
+            <div class="camera-status disconnected">
+                ⚠️ Camera not connected yet.
+                <br>
+                <a href="{{ url_for('camera.configure_camera') }}">Configure camera stream URL</a>
+            </div>
+        {% endif %}
+
+        <div class="nav-links">
+            <a href="{{ url_for('logs.view_logs') }}">View Logs</a> |
+            <a href="{{ url_for('camera.configure_camera') }}">Configure Camera</a> |
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+    </div>
 </body>
 </html>
