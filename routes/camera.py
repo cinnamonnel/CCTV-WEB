@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, Response, redirect, url_for, session, request, flash
+from flask import Blueprint, render_template, Response, redirect, url_for, session, request, flash, jsonify
 from extensions import db
 from models.log import Log
 from models.camera import CameraConfig
 import cv2
+import numpy as np
 
 camera = Blueprint('camera', __name__)
 
@@ -20,18 +21,74 @@ def get_stream_url():
 def generate_frames():
     stream_url = get_stream_url()
     if stream_url is None:
+        # Generate a placeholder image indicating no camera configured
+        yield from generate_error_frame("No camera configured")
+        return
+
+    # Handle special case for webcam (0)
+    if stream_url.strip() == '0':
+        stream_url = 0
+    elif not stream_url.strip():
+        # Generate a placeholder image indicating empty URL
+        yield from generate_error_frame("Empty camera URL")
         return
 
     cap = cv2.VideoCapture(stream_url)
-    while True:
-        success, frame = cap.read()
-        if not success:
-            break
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
+    if not cap.isOpened():
+        # Log the error but generate error frames to show in UI
+        print(f"Error: Could not open video stream: {stream_url}")
+        yield from generate_error_frame(f"Cannot open stream: {stream_url}")
+        return
+
+    try:
+        while True:
+            success, frame = cap.read()
+            if not success:
+                print("Warning: Failed to read frame from video stream")
+                yield from generate_error_frame("Lost video signal")
+                break
+            ret, buffer = cv2.imencode('.jpg', frame)
+            if not ret:
+                print("Warning: Failed to encode frame")
+                yield from generate_error_frame("Encoding failed")
+                break
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    except Exception as e:
+        print(f"Error in video stream: {e}")
+        yield from generate_error_frame(f"Stream error: {str(e)}")
+    finally:
+        cap.release()
+
+
+def generate_error_frame(message):
+    """Generate a placeholder frame with an error message when stream fails."""
+    import numpy as np
+    # Create a black image
+    img = np.zeros((480, 640, 3), dtype=np.uint8)
+    # Add some text
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    # Calculate text size to center it
+    text_size = cv2.getTextSize(message, font, 1, 2)[0]
+    text_x = (img.shape[1] - text_size[0]) // 2
+    text_y = (img.shape[0] + text_size[1]) // 2
+    # Add text with background for better readability
+    cv2.rectangle(img, (text_x - 10, text_y - text_size[1] - 10),
+                  (text_x + text_size[0] + 10, text_y + 10), (0, 0, 0), -1)
+    cv2.putText(img, message, (text_x, text_y), font, 1, (255, 255, 255), 2)
+
+    ret, buffer = cv2.imencode('.jpg', img)
+    if not ret:
+        # Fallback to a very simple black image if encoding fails
+        buffer = np.zeros((100, 100, 3), dtype=np.uint8)
+        ret, buffer = cv2.imencode('.jpg', buffer)
+
+    frame = buffer.tobytes()
+    # Yield the error frame multiple times to ensure it's displayed
+    for _ in range(3):
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    cap.release()
 
 
 @camera.route('/dashboard')
@@ -56,10 +113,6 @@ def dashboard():
 def video_feed():
     if 'username' not in session:
         return redirect(url_for('auth.login'))
-
-    stream_url = get_stream_url()
-    if stream_url is None:
-        return "Camera not configured yet.", 503
 
     return Response(
         generate_frames(),
@@ -88,3 +141,36 @@ def configure_camera():
         return redirect(url_for('camera.dashboard'))
 
     return render_template('configure_camera.html', current_url=config.stream_url or '')
+
+
+@camera.route('/test_connection', methods=['POST'])
+def test_connection():
+    if 'username' not in session:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    data = request.get_json()
+    if not data or 'stream_url' not in data:
+        return jsonify({'success': False, 'error': 'No stream URL provided'}), 400
+
+    stream_url = data['stream_url'].strip()
+
+    # Handle special case for webcam (0)
+    if stream_url == '0':
+        stream_url = 0
+    elif not stream_url:
+        return jsonify({'success': False, 'error': 'Empty stream URL'}), 400
+
+    # Test the connection
+    cap = cv2.VideoCapture(stream_url)
+    if not cap.isOpened():
+        cap.release()
+        return jsonify({'success': False, 'error': f'Cannot open video stream: {stream_url}'}), 400
+
+    # Try to read a frame
+    success, frame = cap.read()
+    cap.release()
+
+    if not success:
+        return jsonify({'success': False, 'error': 'Cannot read frames from stream'}), 400
+
+    return jsonify({'success': True, 'message': 'Connection successful'})

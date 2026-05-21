@@ -1,47 +1,421 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configure Camera – Group 10 NetAd</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 500px; margin: 0 auto; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        .back-link { margin-top: 20px; display: inline-block; color: #007bff; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
-        .flash { padding: 10px; margin-bottom: 20px; border-radius: 4px; }
-        .flash.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .configure-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .input-group button {
+            flex: 0 0 auto;
+        }
+
+        small {
+            display: block;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        small br {
+            display: block;
+            margin: 8px 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .button-group button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .button-group button:active {
+            transform: translateY(0);
+        }
+
+        .button-group .secondary {
+            background: #6c757d;
+        }
+
+        .button-group .secondary:hover {
+            background: #5a6268;
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .button-group .danger {
+            background: #dc3545;
+        }
+
+        .button-group .danger:hover {
+            background: #c82333;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .button-group .success {
+            background: #28a745;
+        }
+
+        .button-group .success:hover {
+            background: #218838;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .flash-messages {
+            margin-bottom: 25px;
+        }
+
+        .flash-messages div {
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flash-messages .flash.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .flash-messages .flash.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .flash-messages .flash.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .preview-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .preview-section h3::before {
+            content: "👁️";
+        }
+
+        .preview-container {
+            text-align: center;
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 480px) {
+            .configure-container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                min-width: auto;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="configure-container">
         <h1>Configure Camera Stream</h1>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-        <form method="POST">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        <form method="POST" id="cameraForm">
             <div class="form-group">
                 <label for="stream_url">Camera Stream URL (RTSP or HTTP)</label>
-                <input type="text" id="stream_url" name="stream_url" value="{{ current_url }}" placeholder="e.g., rtsp://192.168.1.10:554/stream1" required>
-                <small>Examples:
-                    <br>Hikvision: rtsp://192.168.1.10:554/Streaming/Channels/101
-                    <br>Dahua: rtsp://192.168.1.10:554/cam/realmonitor?channel=1&subtype=0
-                    <br>Generic: rtsp://192.168.1.10:554/stream1
-                    <br>Phone app: http://your_phone_ip:8080/video
-                    <br>Webcam: 0
+                <div class="input-group">
+                    <input type="text" id="stream_url" name="stream_url" value="{{ current_url }}" placeholder="e.g., rtsp://192.168.1.10:554/stream1" required>
+                    <button type="button" onclick="testConnection()" class="secondary">Test Connection</button>
+                </div>
+                <small>
+                    Examples:<br>
+                    Hikvision: rtsp://192.168.1.10:554/Streaming/Channels/101<br>
+                    Dahua: rtsp://192.168.1.10:554/cam/realmonitor?channel=1&subtype=0<br>
+                    Generic: rtsp://192.168.1.10:554/stream1<br>
+                    Phone app: http://your_phone_ip:8080/video<br>
+                    Webcam: 0
                 </small>
             </div>
-            <button type="submit">Save Configuration</button>
+
+            <div class="button-group">
+                <button type="submit">Save Configuration</button>
+                <button type="button" onclick="clearStreamUrl()" class="danger">Remove Stream URL</button>
+                <button type="button" onclick="previewStream()" class="success">Preview Stream</button>
+            </div>
         </form>
-        <br>
+
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h3>Stream Preview</h3>
+            <div class="preview-container" id="previewContainer">
+                Click "Preview Stream" to see a live preview
+            </div>
+        </div>
+
         <a href="{{ url_for('camera.dashboard') }}" class="back-link">← Back to Dashboard</a>
     </div>
+
+    <script>
+        function clearStreamUrl() {
+            if (confirm('Are you sure you want to remove the camera stream URL?')) {
+                document.getElementById('stream_url').value = '';
+                // Submit the form to save the empty value
+                document.getElementById('cameraForm').submit();
+            }
+        }
+
+        function testConnection() {
+            const url = document.getElementById('stream_url').value.trim();
+            if (!url) {
+                alert('Please enter a stream URL first');
+                return;
+            }
+
+            const testButton = event.target;
+            const originalText = testButton.textContent;
+            testButton.textContent = 'Testing...';
+            testButton.disabled = true;
+
+            // Send AJAX request to test the connection
+            fetch('{{ url_for('camera.test_connection') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ stream_url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if data.success) {
+                    alert('Connection successful! Stream is accessible.');
+                } else {
+                    alert('Connection failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Connection test failed: ' + error.message);
+            })
+            .finally(() => {
+                testButton.textContent = originalText;
+                testButton.disabled = false;
+            });
+        }
+
+        function previewStream() {
+            const url = document.getElementById('stream_url').value.trim();
+            if (!url) {
+                alert('Please enter a stream URL first');
+                return;
+            }
+
+            const previewSection = document.getElementById('previewSection');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewButton = event.target;
+            const originalText = previewButton.textContent;
+
+            previewSection.style.display = 'block';
+            previewButton.textContent = 'Loading...';
+            previewButton.disabled = true;
+
+            // Create an img element to show the stream
+            previewContainer.innerHTML = `
+                <img src="{{ url_for('camera.video_feed') }}?url=${encodeURIComponent(url)}"
+                     alt="Camera Preview"
+                     onload="previewLoaded()"
+                     onerror="previewError()">
+                <div class="loading-overlay" style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                ">
+                    Loading stream...
+                </div>
+            `;
+
+            // Actually, we need to modify the approach since the video_feed endpoint doesn't accept URL parameters
+            // Let's use a simpler approach - show a placeholder and note that preview requires saving first
+            previewContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <p>📹 To preview the stream, please save the configuration first.</p>
+                    <p><small>The dashboard will show a live preview after saving.</small></p>
+                </div>
+            `;
+
+            previewButton.textContent = originalText;
+            previewButton.disabled = false;
+        }
+
+        function previewLoaded() {
+            const overlay = document.querySelector('.loading-overlay');
+            if (overlay) overlay.remove();
+        }
+
+        function previewError() {
+            document.getElementById('previewContainer').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <p>❌ Failed to load stream preview</p>
+                    <p><small>Please check your URL and try again.</small></p>
+                </div>
+            `;
+            const previewButton = document.querySelector('.button-group .success');
+            previewButton.textContent = 'Preview Stream';
+            previewButton.disabled = false;
+        }
+    </script>
 </body>
 </html>
