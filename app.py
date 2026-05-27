@@ -5,13 +5,34 @@ from models.log import Log
 from extensions import db, limiter
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import inspect, text
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+database_url = os.getenv('DATABASE_URL')
+
+# If the DATABASE_URL is for PostgreSQL, try to connect; if it fails, fall back to SQLite
+if database_url and database_url.startswith('postgresql://'):
+    try:
+        # Test the connection
+        engine = create_engine(database_url)
+        with engine.connect() as conn:
+            pass
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    except OperationalError:
+        print("PostgreSQL connection failed. Falling back to SQLite for local development.")
+        sqlite_url = 'sqlite:///' + os.path.join(app.instance_path, 'cctv_web.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = sqlite_url
+else:
+    if database_url:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'cctv_web.db')
 
 limiter.init_app(app)
 db.init_app(app)
@@ -29,12 +50,17 @@ def get_client_ip():
 def ensure_log_table_schema():
     """Ensure the logs table has all required columns, adding them if missing."""
     with app.app_context():
+        # Print database info for debugging
+        print("Database URI:", app.config['SQLALCHEMY_DATABASE_URI'])
+        print("Engine URL:", db.engine.url)
         inspector = inspect(db.engine)
         if not inspector.has_table("logs"):
             # Table doesn't exist yet - db.create_all() will handle it
+            print("Logs table does not exist, will be created by db.create_all()")
             return
 
         existing_columns = [col['name'] for col in inspector.get_columns('logs')]
+        print("Existing columns in logs table:", existing_columns)
 
         # Add missing columns
         with db.engine.connect() as conn:
@@ -52,7 +78,12 @@ def ensure_log_table_schema():
                     conn.execute(text("ALTER TABLE logs ADD COLUMN reason VARCHAR(255)"))
                     print("Added reason column to logs table")
 
+                if 'user_id' not in existing_columns:
+                    conn.execute(text("ALTER TABLE logs ADD COLUMN user_id INTEGER"))
+                    print("Added user_id column to logs table")
+
                 trans.commit()
+                print("Logs table schema update completed successfully")
             except Exception as e:
                 trans.rollback()
                 print(f"Error updating logs table schema: {e}")

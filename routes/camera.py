@@ -9,17 +9,14 @@ camera = Blueprint('camera', __name__)
 
 
 def get_stream_url():
-    """Get the camera stream URL from the database, creating a default config if none exists."""
+    """Get the camera stream URL from the database, returning None if no config exists."""
     config = CameraConfig.query.first()
     if config is None:
-        config = CameraConfig()
-        db.session.add(config)
-        db.session.commit()
+        return None
     return config.stream_url
 
 
-def generate_frames():
-    stream_url = get_stream_url()
+def generate_frames(stream_url):
     if stream_url is None:
         # Generate a placeholder image indicating no camera configured
         yield from generate_error_frame("No camera configured")
@@ -96,17 +93,22 @@ def dashboard():
     if 'username' not in session:
         return redirect(url_for('auth.login'))
 
+    stream_url = get_stream_url()
+    if stream_url is None:
+        flash('Please configure your camera source first.')
+        return redirect(url_for('camera.configure_camera'))
+
     log = Log(
         username=session['username'],
         action='Viewed camera feed',
         ip_address=request.remote_addr,
-        status='Success'
+        status='Success',
+        user_id=session.get('user_id')
     )
     db.session.add(log)
     db.session.commit()
 
-    camera_ready = get_stream_url() is not None
-    return render_template('dashboard.html', camera_ready=camera_ready)
+    return render_template('dashboard.html', camera_ready=True)
 
 
 @camera.route('/video_feed')
@@ -114,8 +116,13 @@ def video_feed():
     if 'username' not in session:
         return redirect(url_for('auth.login'))
 
+    stream_url = get_stream_url()
+    if stream_url is None:
+        flash('Please configure your camera source first.')
+        return redirect(url_for('camera.configure_camera'))
+
     return Response(
-        generate_frames(),
+        generate_frames(stream_url),
         mimetype='multipart/x-mixed-replace; boundary=frame'
     )
 

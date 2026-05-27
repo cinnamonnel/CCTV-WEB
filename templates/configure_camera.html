@@ -273,7 +273,7 @@
                 <label for="stream_url">Camera Stream URL (RTSP or HTTP)</label>
                 <div class="input-group">
                     <input type="text" id="stream_url" name="stream_url" value="{{ current_url }}" placeholder="e.g., rtsp://192.168.1.10:554/stream1" required>
-                    <button type="button" onclick="testConnection()" class="secondary">Test Connection</button>
+                    <button type="button" onclick="testConnection(event)" class="secondary">Test Connection</button>
                 </div>
                 <small>
                     Examples:<br>

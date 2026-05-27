@@ -61,14 +61,19 @@ def register():
             bcrypt.gensalt()
         ).decode('utf-8')
 
-        new_user = User(username=username, password=hashed_password)
+        # Determine role: if no users exist, make this user an admin
+        user_count = User.query.count()
+        role = 'admin' if user_count == 0 else 'user'
+
+        new_user = User(username=username, password=hashed_password, role=role)
         db.session.add(new_user)
 
         log = Log(
             username=username,
             action='Registered an account',
             ip_address=request.remote_addr,
-            status='Success'
+            status='Success',
+            user_id=new_user.id
         )
         db.session.add(log)
         db.session.commit()
@@ -110,12 +115,14 @@ def login():
             db.session.commit()
 
             session['username'] = username
+            session['user_id'] = user.id
 
             log = Log(
                 username=username,
                 action='Logged in',
                 ip_address=ip_address,
-                status='Success'
+                status='Success',
+                user_id=user.id
             )
             db.session.add(log)
             db.session.commit()
@@ -156,11 +163,13 @@ def logout():
     username = session.get('username')
 
     if username:
+        user = User.query.filter_by(username=username).first()
         log = Log(
             username=username,
             action='Logged out',
             ip_address=request.remote_addr,
-            status='Success'
+            status='Success',
+            user_id=user.id if user else None
         )
         db.session.add(log)
         db.session.commit()
