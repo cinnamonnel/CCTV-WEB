@@ -1,5 +1,8 @@
 # CCTV Web Monitoring System
 
+## Live Demo
+[Live Application](https://web-production-b3169.up.railway.app)
+
 A web-based CCTV monitoring system with user authentication, role-based access, activity logging, and live camera streaming capabilities.
 
 ## Features
@@ -153,37 +156,3 @@ Cloud Architecture:
 - **Input Validation**: Form validation and sanitization
 - **Account Lockout**: Temporary lock after 5 failed attempts
 - **SQL Injection Protection**: SQLAlchemy ORM with parameterized queries
-- **CSRF Protection**: Session-based request validation
-
-## API Endpoints
-
-### Authentication
-- `GET /register` - Registration form
-- `POST /register` - Process registration
-- `GET /login` - Login form
-- `POST /login` - Process login
-- `GET /logout` - Logout user
-
-### Camera
-- `GET /dashboard` - Main dashboard with live feed
-- `GET /video_feed` - MJPEG video stream
-- `GET /configure` - Camera configuration form
-- `POST /configure` - Save camera configuration
-- `POST /test_connection` - Test camera stream connectivity
-
-### Logs
-- `GET /logs` - View activity logs with filtering
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
-## Acknowledgments
-
-- OpenCV for video processing
-- Flask community for excellent documentation
-- Railway for PostgreSQL hosting
