@@ -272,7 +272,7 @@
             <div class="form-group">
                 <label for="stream_url">Camera Stream URL (RTSP or HTTP)</label>
                 <div class="input-group">
-                    <input type="text" id="stream_url" name="stream_url" value="{{ current_url }}" placeholder="e.g., rtsp://192.168.1.10:554/stream1" required>
+                    <input type="text" id="stream_url" name="stream_url" value="{{ current_url }}" placeholder="e.g., rtsp://192.168.1.10:554/stream1">
                     <button type="button" onclick="testConnection(event)" class="secondary">Test Connection</button>
                 </div>
                 <small>
@@ -288,7 +288,7 @@
             <div class="button-group">
                 <button type="submit">Save Configuration</button>
                 <button type="button" onclick="clearStreamUrl()" class="danger">Remove Stream URL</button>
-                <button type="button" onclick="previewStream()" class="success">Preview Stream</button>
+                <button type="button" onclick="previewStream(event)" class="success">Preview Stream</button>
             </div>
         </form>
 
@@ -333,7 +333,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                if data.success) {
+                if (data.success) {
                     alert('Connection successful! Stream is accessible.');
                 } else {
                     alert('Connection failed: ' + (data.error || 'Unknown error'));
@@ -348,7 +348,7 @@
             });
         }
 
-        function previewStream() {
+        function previewStream(event) {
             const url = document.getElementById('stream_url').value.trim();
             if (!url) {
                 alert('Please enter a stream URL first');

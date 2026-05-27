@@ -139,3 +139,12 @@ Thumbs.db
 env.bak
 venv.bak
 SSHKEYS/
+
+# Claude Code
+.claude/
+
+# Local test/dev scripts
+check_db.py
+test_camera.py
+test_webcam.py
+FIXES_SUMMARY.md

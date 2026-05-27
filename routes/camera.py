@@ -10,10 +10,15 @@ camera = Blueprint('camera', __name__)
 
 def get_stream_url():
     """Get the camera stream URL from the database, returning None if no config exists."""
-    config = CameraConfig.query.first()
-    if config is None:
+    try:
+        db.session.rollback()
+        config = CameraConfig.query.first()
+        if config is None:
+            return None
+        return config.stream_url
+    except Exception:
+        db.session.rollback()
         return None
-    return config.stream_url
 
 
 def generate_frames(stream_url):
@@ -98,15 +103,19 @@ def dashboard():
         flash('Please configure your camera source first.')
         return redirect(url_for('camera.configure_camera'))
 
-    log = Log(
-        username=session['username'],
-        action='Viewed camera feed',
-        ip_address=request.remote_addr,
-        status='Success',
-        user_id=session.get('user_id')
-    )
-    db.session.add(log)
-    db.session.commit()
+    try:
+        db.session.rollback()
+        log = Log(
+            username=session['username'],
+            action='Viewed camera feed',
+            ip_address=request.remote_addr,
+            status='Success',
+            user_id=session.get('user_id')
+        )
+        db.session.add(log)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
     return render_template('dashboard.html', camera_ready=True)
 
@@ -131,19 +140,35 @@ def video_feed():
 def configure_camera():
     if 'username' not in session:
         return redirect(url_for('auth.login'))
-    # Optionally restrict to admin users; for now any logged-in user can configure
-    config = CameraConfig.query.first()
+
+    try:
+        db.session.rollback()
+        config = CameraConfig.query.first()
+    except Exception:
+        db.session.rollback()
+        config = None
+
     if config is None:
         config = CameraConfig()
-        db.session.add(config)
-        db.session.commit()
+        try:
+            db.session.rollback()
+            db.session.add(config)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            config = CameraConfig()
 
     if request.method == 'POST':
         stream_url = request.form.get('stream_url', '').strip()
         if stream_url == '':
             stream_url = None
         config.stream_url = stream_url
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Failed to save camera configuration.')
+            return redirect(url_for('camera.configure_camera'))
         flash('Camera configuration saved.')
         return redirect(url_for('camera.dashboard'))
 

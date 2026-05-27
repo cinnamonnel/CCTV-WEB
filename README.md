@@ -15,26 +15,32 @@ A web-based CCTV monitoring system with user authentication, role-based access, 
 ## System Architecture
 
 ```
-[User Browser] 
+Physical Topology:
+[CCTV Camera] ---(Ethernet)--- [Router/Switch] ---(Ethernet)--- [App Server (Flask/Gunicorn)] ---(HTTPS)--- [Browser]
+
+Cloud Architecture:
+[Browser]
      ↓ (HTTPS)
-[Render/Vercel/Railway Server] 
+[Railway Server]
      ↓ (PostgreSQL via SSL)
-[Neon/Supabase Database]
+[Railway PostgreSQL]
 ```
 
 ### Components:
+- **Physical CCTV Camera**: Hikvision, Dahua, or any RTSP-capable camera connected to LAN via router/switch
+- **Router/Switch**: Standard network router connecting camera to local network
+- **App Server**: Python Flask application running on Railway, receiving RTSP streams from camera
+- **Database**: Railway PostgreSQL for persistent storage
 - **Frontend**: Flask templates with Bootstrap styling
-- **Backend**: Python Flask application
-- **Database**: PostgreSQL hosted on Neon or Supabase
-- **Camera Streaming**: OpenCV video capture with MJPEG streaming
-- **Security**: Bcrypt hashing, session management, IP-based rate limiting
+- **Camera Streaming**: OpenCV video capture with MJPEG streaming over HTTP
 
 ## Setup Instructions
 
 ### Prerequisites
 - Python 3.8+
 - Git
-- Neon or Supabase account for PostgreSQL database
+- Railway account for PostgreSQL database
+- Physical CCTV camera with RTSP support connected to local network
 
 ### Local Development
 
@@ -61,7 +67,7 @@ A web-based CCTV monitoring system with user authentication, role-based access, 
    SECRET_KEY=your-super-secret-key-change-this-in-production
    DATABASE_URL=postgresql://username:password@host:port/dbname
    ```
-   Replace the DATABASE_URL with your Neon or Supabase connection string.
+   Replace the DATABASE_URL with your Railway PostgreSQL connection string.
 
 5. **Initialize the database**
    ```bash
@@ -75,22 +81,37 @@ A web-based CCTV monitoring system with user authentication, role-based access, 
    ```
    Access the application at http://localhost:8080
 
-### Deployment to Cloud (Render/Railway/Vercel)
+### Camera Connection
+
+1. Connect your CCTV camera to the same network as your server via Ethernet or WiFi
+2. Note the camera's IP address (usually found via camera's web interface or NVR)
+3. Find the camera's RTSP URL from the manufacturer's documentation:
+   - Hikvision: `rtsp://camera_ip:554/Streaming/Channels/101`
+   - Dahua: `rtsp://camera_ip:554/cam/realmonitor?channel=1&subtype=0`
+4. Enter the RTSP URL in the Camera Configuration page after logging in
+
+### Deployment to Railway
 
 1. **Push to GitHub**
    Ensure your code is committed and pushed to GitHub.
 
-2. **Connect to Render**
-   - Create a new Web Service
-   - Connect your GitHub repository
-   - Set the build command: `pip install -r requirements.txt`
-   - Set the start command: `gunicorn app:app --bind 0.0.0.0:8080`
-   - Add environment variables:
-     - `SECRET_KEY`: your secret key
-     - `DATABASE_URL`: your Neon/Supabase PostgreSQL connection string
+2. **Create Railway Project**
+   - Go to railway.app and create a new project
+   - Add a PostgreSQL database to the project
+   - Note the connection string from the database tab
 
-3. **Deploy**
-   Render will automatically build and deploy your application.
+3. **Deploy Application**
+   - Connect your GitHub repository to Railway
+   - Add environment variables:
+     - `SECRET_KEY`: a strong random secret key
+     - `DATABASE_URL`: the Railway PostgreSQL connection string
+   - Railway will automatically install dependencies and run gunicorn
+
+4. **Verify Deployment**
+   - Access your deployed application via the Railway-provided URL
+   - Register an admin account (first user is automatically admin)
+   - Configure your camera's RTSP stream URL
+   - Verify live feed displays correctly
 
 ## Database Schema
 
@@ -123,17 +144,16 @@ A web-based CCTV monitoring system with user authentication, role-based access, 
 ![Logs](screenshots/logs.png)
 *Complete audit trail with filtering by user*
 
-*Note: Screenshots placeholder - actual screenshots would be added in the screenshots/ directory*
-
 ## Security Features
 
 - **Password Security**: Bcrypt hashing with salt
-- **Session Management**: Secure Flask sessions with timeout
+- **Session Management**: Secure Flask sessions with HttpOnly, Secure, SameSite=Lax cookies, 2-hour expiry
 - **IP Tracking**: All actions logged with IP address
 - **Rate Limiting**: Flask-Limiter prevents brute force attacks
 - **Input Validation**: Form validation and sanitization
 - **Account Lockout**: Temporary lock after 5 failed attempts
 - **SQL Injection Protection**: SQLAlchemy ORM with parameterized queries
+- **CSRF Protection**: Session-based request validation
 
 ## API Endpoints
 
@@ -162,12 +182,8 @@ A web-based CCTV monitoring system with user authentication, role-based access, 
 4. Push to the branch
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## Acknowledgments
 
 - OpenCV for video processing
 - Flask community for excellent documentation
-- Neon/Supabase for PostgreSQL hosting
+- Railway for PostgreSQL hosting
